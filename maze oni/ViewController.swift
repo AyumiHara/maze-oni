@@ -120,6 +120,7 @@ class ViewController: UIViewController {
             if posY <= self.playerView.frame.width / 2{
                 self.speedY = 0
                 self.playerView.frame.width / 2
+                
             }
             
             
