@@ -11,6 +11,8 @@ import CoreMotion
 
 class ViewController: UIViewController {
     
+    
+    
     var playerView : UIView!
     var playerMotionManager: CMMotionManager!
     var speedX :Double = 0.0
@@ -34,6 +36,8 @@ class ViewController: UIViewController {
     var startView : UIView!
     var goalView : UIView!
     
+    var wallRectArray = [CGRect]()
+    
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -52,17 +56,21 @@ class ViewController: UIViewController {
                 let wallView = createView(x: x, y: y, width: cellWidth, height: cellHight, offSetX: cellOffSetX, offsetY: cellOffSetY)
                 wallView.backgroundColor = UIColor.black
                 view.addSubview(wallView)
-                
+                wallRectArray.append(wallView.frame)
             case 2:
-                let startView = createView(x: x, y: y, width: cellWidth, height: cellHight, offSetX: cellOffSetX, offsetY: cellOffSetY)
+               startView = createView(x: x, y: y, width: cellWidth, height: cellHight, offSetX: cellOffSetX, offsetY: cellOffSetY)
                 startView.backgroundColor = UIColor.green
                 view.addSubview(startView)
                 
+                print("スタート")
+                print(startView)
+                
                 
             case 3:
-                let goalView = createView(x: x, y: y, width: cellWidth, height: cellHight, offSetX: cellOffSetX, offsetY: cellOffSetY)
+                goalView = createView(x: x, y: y, width: cellWidth, height: cellHight, offSetX: cellOffSetX, offsetY: cellOffSetY)
                 goalView.backgroundColor = UIColor.red
                 view.addSubview(goalView)
+                
                 
             default:
                 break
@@ -72,7 +80,7 @@ class ViewController: UIViewController {
       }
         
         playerView = UIView(frame: CGRect(x: 0, y: 0, width: cellWidth/6, height: cellHight/6))
-        
+       
         playerView.center = startView.center
         playerView.backgroundColor = UIColor.gray
         self.view.addSubview(playerView)
@@ -81,7 +89,6 @@ class ViewController: UIViewController {
         playerMotionManager.accelerometerUpdateInterval = 0.02
         
         self.startAccelerometer()
-        
     }
     
     
@@ -122,13 +129,50 @@ class ViewController: UIViewController {
                 self.playerView.frame.width / 2
                 
             }
-            
-            
-            
-            
-            
+             self.playerView.center = CGPoint(x: posX, y: posY)
             
         }
+        for wallRect in self .wallRectArray {
+            if (wallRect.intersects(self.playerView.frame)){
+                self.gameCheck(result: "game over", message: "壁に当たりました")
+                return
+            }
+            
+            print(goalView)
+            if (self.goalView.frame.intersects(self.playerView.frame)){
+                self.gameCheck(result: "clear", message: "クリアしました")
+                return
+            }
+        }
+        
+        playerMotionManager.startAccelerometerUpdates(to: OperationQueue.main, withHandler: handler)
+    }
+    
+    func gameCheck(result :String , message:String){
+        if playerMotionManager.isAccelerometerActive{
+            playerMotionManager.stopAccelerometerUpdates()
+        }
+        let gameCheckAlert: UIAlertController = UIAlertController(title: result, message: message, preferredStyle: .alert)
+        
+        let retryAction = UIAlertAction(title: "もう一度", style: .default, handler: {(action: UIAlertAction!) -> Void in
+            
+            self.retry()
+        })
+        
+        gameCheckAlert.addAction(retryAction)
+        
+        self.present(gameCheckAlert, animated: true, completion: nil)
+        
+    }
+    
+    func retry() {
+        playerView.center = startView.center
+        
+        if !playerMotionManager.isAccelerometerActive {
+            self.startAccelerometer()
+        }
+        speedX = 0.0
+        speedY = 0.0
     }
 
 
